@@ -1,0 +1,60 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          autocopy
+# Required-Start:    $local_fs $syslog $named
+# Required-Stop:     $local_fs $syslog $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# X-Interactive:     false
+# Short-Description: Starts usb autocopy
+# Description: Copies usb sticks to the local disk with dd
+### END INIT INFO
+
+RETVAL=0
+prog="autocopy"
+
+start() {
+
+        echo -n $"Starting $prog"
+        ./home/linaro/autocopy.sh >> /var/log/autocopy &
+        RETVAL=$?
+        [ "$RETVAL" = 0 ] && touch /var/lock/$prog
+        echo
+}
+
+stop() {
+        echo -n $"Stopping $prog"
+        echo default-on > /sys/class/leds/white\:pd27\:led3/trigger
+        pkill $prog
+        RETVAL=$?
+        [ "$RETVAL" = 0 ] && rm -f /var/lock/$prog
+        echo
+}
+restart() {
+        echo -n "Restarting $prog"
+        stop
+        sleep 1
+        start
+}
+
+case "$1" in
+        start)
+                start
+                ;;
+        stop)
+                stop
+                ;;
+        restart)
+                stop
+                sleep 1
+                start
+                ;;
+        status)
+                status $prog
+                RETVAL=$?
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|restart|status}"
+                RETVAL=1
+esac
+exit $RETVAL
